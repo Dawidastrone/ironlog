@@ -130,14 +130,15 @@ export default function App(){
 
   const ph={width:"100%",height:"100%",background:C.bg,overflow:"hidden",position:"relative",fontFamily:font,display:"flex"};
   const sc={flex:1,overflow:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch"};
-  const px=isWide?"0 40px ":"0 16px "; // responsive horizontal padding
+
+  // Responsive: detect desktop
+  const[isWide,setIsWide]=useState(typeof window!=="undefined"?window.innerWidth>=768:false);
+  useEffect(()=>{const h=()=>setIsWide(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+
+  const px=isWide?"0 40px ":"0 16px ";
   const ts={fontSize:10,fontWeight:600,color:C.muted,textAlign:"center",padding:"5px 3px",borderBottom:`1px solid ${C.border}`};
   const td={fontSize:12,fontWeight:700,color:C.text,textAlign:"center",padding:"7px 3px",borderBottom:`1px solid ${C.border}`};
   const m2=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
-
-  // Responsive: detect desktop
-  const[isWide,setIsWide]=useState(window.innerWidth>=768);
-  useEffect(()=>{const h=()=>setIsWide(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
   const navItems=[{l:"Trening",ic:Ic.barbell,s:"home"},{l:"Historia",ic:Ic.hist,s:"hist"},{l:"Mapa",ic:Ic.plan,s:"map"},{l:"Plan",ic:Ic.trend,s:"edit"}];
 
