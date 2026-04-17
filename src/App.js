@@ -73,8 +73,8 @@ const Ic={
 const PH={Akumulacja:{s:"AKU",c:C.blue},Intensyfikacja:{s:"INT",c:C.warm},Deload:{s:"DEL",c:C.green}};
 const MODELS=[{id:"linear",name:"Stały przyrost",color:C.green,bg:C.greenBg,icon:Ic.trend},{id:"double",name:"Podwójna progresja",color:C.green,bg:C.greenBg,icon:Ic.trend},{id:"block",name:"Period. blokowa",color:C.purple,bg:C.purpleBg,icon:Ic.brain},{id:"rpe",name:"Autoregulacja",color:C.warm,bg:C.warmBg,icon:Ic.brain},{id:"dup",name:"Zmienne obciąż.",color:C.blue,bg:C.blueBg,icon:Ic.brain}];
 
-const StatusBar=()=><div style={{height:"env(safe-area-inset-top, 20px)",flexShrink:0}}/>;
-function BNav({a,go}){return <div style={{position:"absolute",bottom:0,left:0,right:0,height:78,paddingBottom:"max(12px, env(safe-area-inset-bottom, 12px))",background:`linear-gradient(to top,${C.bg} 60%,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",gap:32,zIndex:10}}>{[{l:"Trening",ic:Ic.barbell,s:"home"},{l:"Historia",ic:Ic.hist,s:"hist"},{l:"Mapa",ic:Ic.plan,s:"map"},{l:"Plan",ic:Ic.trend,s:"edit"}].map(t=><Btn key={t.l} onClick={()=>go(t.s)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}><span>{t.ic(a===t.s?C.acD:C.muted)}</span><span style={{fontSize:9,fontWeight:600,color:a===t.s?C.acD:C.muted}}>{t.l}</span></Btn>)}</div>;}
+const StatusBar=()=><div style={{height:"env(safe-area-inset-top, 12px)",minHeight:12,flexShrink:0}}/>;
+function BNav({a,go,hide}){if(hide)return null;return <div style={{position:"absolute",bottom:0,left:0,right:0,height:78,paddingBottom:"max(12px, env(safe-area-inset-bottom, 12px))",background:`linear-gradient(to top,${C.bg} 60%,transparent)`,display:"flex",alignItems:"center",justifyContent:"center",gap:32,zIndex:10}}>{[{l:"Trening",ic:Ic.barbell,s:"home"},{l:"Historia",ic:Ic.hist,s:"hist"},{l:"Mapa",ic:Ic.plan,s:"map"},{l:"Plan",ic:Ic.trend,s:"edit"}].map(t=><Btn key={t.l} onClick={()=>go(t.s)} style={{background:"none",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3}}><span>{t.ic(a===t.s?C.acD:C.muted)}</span><span style={{fontSize:9,fontWeight:600,color:a===t.s?C.acD:C.muted}}>{t.l}</span></Btn>)}</div>;}
 function RTimer({sec,onDone}){const[r,setR]=useState(sec);useEffect(()=>{if(r<=0){onDone();return;}const t=setTimeout(()=>setR(x=>x-1),1000);return()=>clearTimeout(t);},[r]);return <div style={{position:"absolute",bottom:88,left:16,right:16,background:C.white,borderRadius:16,padding:"10px 16px",display:"flex",alignItems:"center",gap:12,zIndex:50,boxShadow:"0 8px 30px rgba(0,0,0,.15)"}}><div><div style={{fontSize:10,fontWeight:600,color:C.muted}}>PRZERWA</div><div style={{fontSize:20,fontWeight:800,color:C.text,fontFamily:"monospace"}}>{Math.floor(r/60)}:{String(r%60).padStart(2,"0")}</div></div><div style={{flex:1}}/><Btn onClick={onDone} style={{background:C.inp,border:"none",borderRadius:10,padding:"8px 16px",fontSize:13,fontWeight:700,color:C.sub,cursor:"pointer",fontFamily:font}}>Pomiń</Btn></div>;}
 
 /* ═══ DATA ═══ */
@@ -128,20 +128,49 @@ export default function App(){
   const goWo=d=>{setDid(d);setWSec(0);setWRun(true);setFin(false);setScr("wo");};
   const upd=useCallback((eid,si,p)=>{setLog(prev=>{const wl={...(prev[wk-1]||{})};const a=[...(wl[eid]||[])];while(a.length<=si)a.push({});a[si]={...(a[si]||{}),...p};wl[eid]=a;return{...prev,[wk-1]:wl};});},[wk]);
 
-  const ph={width:"100%",height:"100%",maxWidth:430,margin:"0 auto",background:C.bg,overflow:"hidden",position:"relative",fontFamily:font};
+  const ph={width:"100%",height:"100%",background:C.bg,overflow:"hidden",position:"relative",fontFamily:font,display:"flex"};
   const sc={flex:1,overflow:"auto",overscrollBehavior:"contain",WebkitOverflowScrolling:"touch"};
+  const px=isWide?"0 40px ":"0 16px "; // responsive horizontal padding
   const ts={fontSize:10,fontWeight:600,color:C.muted,textAlign:"center",padding:"5px 3px",borderBottom:`1px solid ${C.border}`};
   const td={fontSize:12,fontWeight:700,color:C.text,textAlign:"center",padding:"7px 3px",borderBottom:`1px solid ${C.border}`};
   const m2=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
 
-  return <div style={{height:"100%",width:"100%",background:C.bg}}>
+  // Responsive: detect desktop
+  const[isWide,setIsWide]=useState(window.innerWidth>=768);
+  useEffect(()=>{const h=()=>setIsWide(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+
+  const navItems=[{l:"Trening",ic:Ic.barbell,s:"home"},{l:"Historia",ic:Ic.hist,s:"hist"},{l:"Mapa",ic:Ic.plan,s:"map"},{l:"Plan",ic:Ic.trend,s:"edit"}];
+
+  return <div style={{height:"100%",width:"100%",background:isWide?"#E8E7ED":C.bg,display:"flex"}}>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&display=swap" rel="stylesheet"/>
-    <div style={ph}>
+
+    {/* Desktop sidebar */}
+    {isWide&&<div style={{width:220,background:"#111113",display:"flex",flexDirection:"column",padding:"24px 0",flexShrink:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"0 20px",marginBottom:32}}>
+        <div style={{width:36,height:36,borderRadius:10,background:"#C8F525",display:"flex",alignItems:"center",justifyContent:"center"}}>{Ic.barbell("#111")}</div>
+        <span style={{fontSize:20,fontWeight:900,color:"#fff",letterSpacing:"-.03em"}}>IRONLOG</span>
+      </div>
+      {navItems.map(t=>{const a=scr===t.s||(t.s==="home"&&scr==="wo");return <Btn key={t.l} onClick={()=>setScr(t.s)} style={{display:"flex",alignItems:"center",gap:12,padding:"12px 20px",margin:"2px 8px",borderRadius:12,background:a?"rgba(200,245,37,.12)":"transparent",border:"none",cursor:"pointer",fontFamily:font}}>
+        <span>{t.ic(a?C.acD:"#888")}</span>
+        <span style={{fontSize:14,fontWeight:a?700:500,color:a?C.acD:"#888"}}>{t.l}</span>
+      </Btn>;})}
+      <div style={{flex:1}}/>
+      <div style={{padding:"0 20px"}}>
+        <div style={{background:"rgba(255,255,255,.06)",borderRadius:10,padding:"10px 12px"}}>
+          <div style={{fontSize:10,color:"#666",fontWeight:600}}>AKTYWNY PLAN</div>
+          <div style={{fontSize:13,fontWeight:700,color:"#fff",marginTop:2}}>{plan.name}</div>
+          <div style={{fontSize:10,color:C.acD,fontWeight:600,marginTop:1}}>{mdl?.name||"Brak modelu"}</div>
+        </div>
+      </div>
+    </div>}
+
+    {/* Main content area */}
+    <div style={{flex:1,height:"100%",overflow:"hidden",position:"relative",background:C.bg,maxWidth:isWide?900:"none",margin:isWide?"0 auto":"0"}}>
 
     {/* HOME */}
     <div style={{height:"100%",display:scr==="home"?"flex":"none",flexDirection:"column"}}>
       <StatusBar/>
-      <div style={{...sc,padding:"0 16px 96px"}}>
+      <div style={{...sc,padding:px+"96px"}}>
         <div style={{display:"inline-flex",alignItems:"center",gap:6,background:(PH[wk0?.type]?.c||C.blue)+"14",padding:"4px 12px",borderRadius:8,marginBottom:6}}><div style={{width:6,height:6,borderRadius:3,background:PH[wk0?.type]?.c}}/><span style={{fontSize:11,fontWeight:700,color:PH[wk0?.type]?.c}}>T{wk}/{plan.weeks.length} · {wk0?.type}</span></div>
         <h1 style={{fontSize:24,fontWeight:900,color:C.text,margin:"4px 0 4px"}}>Cześć {profile.name||"Dawid"}!</h1>
         <div style={{display:"flex",alignItems:"center",gap:6,margin:"0 0 14px"}}>
@@ -151,19 +180,21 @@ export default function App(){
         </div>
         <div style={{display:"flex",gap:4,marginBottom:14,overflowX:"auto"}}>{plan.weeks.map((w,i)=>{const a=i+1===wk,pc=PH[w.type]?.c;const hl=!!log[i];return <Btn key={i} onClick={()=>setWk(i+1)} style={{minWidth:44,padding:"8px 4px",borderRadius:10,fontFamily:font,border:a?`2px solid ${pc}`:`1px solid ${C.border}`,background:a?pc+"14":C.white,color:a?pc:C.sub,fontSize:12,fontWeight:700,flexShrink:0,cursor:"pointer",position:"relative"}}>T{i+1}<span style={{display:"block",fontSize:8,color:pc,fontWeight:600,marginTop:1}}>{PH[w.type]?.s}</span>{hl&&<div style={{position:"absolute",top:-2,right:-2,width:7,height:7,borderRadius:4,background:C.green,border:`2px solid ${C.bg}`}}/>}</Btn>})}</div>
         <div style={{fontSize:10,fontWeight:800,color:C.muted,letterSpacing:".05em",marginBottom:8}}>PLAN NA TYDZIEŃ {wk}</div>
-        {plan.days.map(d=>{const dr=roadmap[wk-1]?.[d.id];return <div key={d.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:12,marginBottom:8,boxShadow:C.sh}}>
+        <div style={{display:"grid",gridTemplateColumns:isWide?"1fr 1fr":"1fr",gap:8}}>
+        {plan.days.map(d=>{const dr=roadmap[wk-1]?.[d.id];return <div key={d.id} style={{background:C.card,border:`1px solid ${C.border}`,borderRadius:14,padding:12,boxShadow:C.sh}}>
           <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:6}}><h3 style={{fontSize:14,fontWeight:700,color:C.text,margin:0}}>{d.name}</h3><span style={{fontSize:9,color:PH[wk0?.type]?.c,fontWeight:700,background:PH[wk0?.type]?.c+"14",padding:"2px 8px",borderRadius:5}}>{wk0?.type}</span></div>
           <table style={{width:"100%",borderCollapse:"collapse",marginBottom:8}}><thead><tr><th style={{...ts,textAlign:"left"}}>Ćwiczenie</th><th style={ts}>Serie</th><th style={ts}>Ciężar</th><th style={ts}>Powt.</th></tr></thead>
             <tbody>{d.exercises.map(ex=>{const p=dr?.[ex.id]?.[0];return <tr key={ex.id}><td style={{...td,textAlign:"left",fontWeight:ex.progOn?700:500,color:ex.progOn?C.text:C.sub,fontSize:11}}>{ex.progOn&&<span style={{color:mdl?.color,marginRight:3}}>●</span>}{ex.name}</td><td style={td}>{(dr?.[ex.id]||ex.sets).length}</td><td style={{...td,color:ex.progOn?mdl?.color:C.text,fontWeight:800}}>{p?`${p.w}kg`:"—"}</td><td style={td}>×{p?.r||"?"}</td></tr>})}</tbody>
           </table>
           <Btn onClick={()=>goWo(d.id)} style={{width:"100%",padding:10,borderRadius:10,border:"none",background:C.acD,color:"#111",fontSize:13,fontWeight:800,cursor:"pointer",fontFamily:font}}>Rozpocznij trening</Btn>
-        </div>})}
+        </div>;})}
+        </div>
         <div style={{background:C.card,borderRadius:14,padding:12,boxShadow:C.sh,marginTop:4}}>
           <div style={{fontSize:10,fontWeight:800,color:C.muted,marginBottom:6}}>TWOJE 1RM</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>{Object.entries(RMS).filter(([k])=>["Bench Press","Squat","Deadlift","OHP"].includes(k)).map(([k,v])=><div key={k} style={{background:C.inp,borderRadius:8,padding:"6px 8px"}}><div style={{fontSize:9,color:C.muted}}>{k}</div><div style={{fontSize:16,fontWeight:800,color:C.text}}>{v}<span style={{fontSize:10,color:C.muted}}>kg</span></div></div>)}</div>
+          <div style={{display:"grid",gridTemplateColumns:isWide?"1fr 1fr 1fr 1fr":"1fr 1fr",gap:6}}>{Object.entries(allRms).filter(([k])=>["Bench Press","Squat","Deadlift","OHP"].includes(k)).map(([k,v])=><div key={k} style={{background:C.inp,borderRadius:8,padding:"6px 8px"}}><div style={{fontSize:9,color:C.muted}}>{k}</div><div style={{fontSize:16,fontWeight:800,color:C.text}}>{v}<span style={{fontSize:10,color:C.muted}}>kg</span></div></div>)}</div>
         </div>
       </div>
-      <BNav a="home" go={setScr}/>
+      <BNav a="home" go={setScr} hide={isWide}/>
     </div>
 
     {/* WORKOUT */}
@@ -179,7 +210,7 @@ export default function App(){
         <div style={{display:"flex",alignItems:"center",gap:5}}><span style={{fontFamily:"monospace",fontSize:13,fontWeight:700,color:C.text}}>{m2(wSec)}</span><Btn onClick={()=>setWRun(r=>!r)} style={{width:26,height:26,borderRadius:7,background:C.inp,border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>{wRun?Ic.pause:Ic.play}</Btn><Btn onClick={()=>{setWSec(0);setWRun(true);}} style={{width:26,height:26,borderRadius:7,background:C.inp,border:"none",display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer"}}>{Ic.resetIc}</Btn></div>
         <div style={{fontSize:11,fontWeight:700,color:C.sub}}>{tSets}s · {(tVol/1000).toFixed(1)}t</div>
       </div>
-      <div style={{...sc,padding:"10px 10px 120px"}}>
+      <div style={{...sc,padding:isWide?"10px 32px 120px":"10px 10px 120px"}}>
         {day?.exercises.map(ex=>{const pl=roadmap[wk-1]?.[day.id]?.[ex.id]||[];const sets=wLog[ex.id]||[];const tot=Math.max(pl.length,sets.length,ex.sets.length);const dn=sets.filter(s=>s?.done).length;const ok=dn>=pl.length&&pl.length>0;const rm1=allRms[ex.name]||0;
           return <div key={ex.id} style={{background:C.card,borderRadius:14,marginBottom:10,boxShadow:C.sh,border:`1px solid ${ok?C.acBg2:C.border}`,overflow:"hidden"}}>
             <div style={{padding:"12px 14px 0"}}>
@@ -217,7 +248,7 @@ export default function App(){
       <StatusBar/>
       <div style={{padding:"0 16px 6px"}}><h1 style={{fontSize:20,fontWeight:800,color:C.text,margin:0}}>Historia treningów</h1></div>
       <div style={{display:"flex",gap:3,padding:"4px 16px 8px",overflowX:"auto"}}>{plan.weeks.map((w,i)=>{const a=i===hWk,pc=PH[w.type]?.c;const hl=!!log[i];return <Btn key={i} onClick={()=>setHWk(i)} style={{minWidth:40,padding:"6px 4px",borderRadius:7,fontFamily:font,border:a?`2px solid ${pc}`:`1px solid ${C.border}`,background:a?pc+"14":C.white,color:a?pc:C.sub,fontSize:10,fontWeight:700,flexShrink:0,cursor:"pointer",opacity:hl?1:.4}}>T{i+1}</Btn>})}</div>
-      <div style={{...sc,padding:"0 6px 96px"}}>
+      <div style={{...sc,padding:"0 "+(isWide?"32px":"6px")+" 96px"}}>
         {plan.days.map(d=>{const pl=roadmap[hWk]?.[d.id];const ac=log[hWk];
           return <div key={d.id} style={{background:C.card,borderRadius:12,marginBottom:8,boxShadow:C.sh,overflow:"hidden"}}>
             <div style={{padding:"8px 10px 4px",background:C.inp,display:"flex",justifyContent:"space-between",alignItems:"center"}}><h3 style={{fontSize:12,fontWeight:700,color:C.text,margin:0}}>{d.name}</h3><span style={{fontSize:9,color:PH[plan.weeks[hWk]?.type]?.c,fontWeight:600}}>{plan.weeks[hWk]?.type}</span></div>
@@ -240,14 +271,14 @@ export default function App(){
         })}
         {!log[hWk]&&<p style={{fontSize:12,color:C.muted,textAlign:"center",marginTop:16}}>Brak danych dla tego tygodnia</p>}
       </div>
-      <BNav a="hist" go={setScr}/>
+      <BNav a="hist" go={setScr} hide={isWide}/>
     </div>
 
     {/* ROADMAP */}
     <div style={{height:"100%",display:scr==="map"?"flex":"none",flexDirection:"column"}}>
       <StatusBar/>
       <div style={{padding:"0 16px 6px"}}><h1 style={{fontSize:20,fontWeight:800,color:C.text,margin:0}}>Mapa progresji</h1><p style={{fontSize:11,color:C.sub,margin:"2px 0 0"}}>{mdl?.name} · Pełna mapa treningowa</p></div>
-      <div style={{...sc,padding:"4px 6px 96px"}}>
+      <div style={{...sc,padding:"4px "+(isWide?"32px":"6px")+" 96px"}}>
         {plan.days.map(d=><div key={d.id} style={{background:C.card,borderRadius:12,marginBottom:8,boxShadow:C.sh,overflow:"hidden"}}>
           <div style={{padding:"8px 10px 4px",background:C.inp}}><h3 style={{fontSize:12,fontWeight:700,color:C.text,margin:0}}>{d.name}</h3></div>
           <div style={{overflowX:"auto"}}>
@@ -277,7 +308,7 @@ export default function App(){
           </p>
         </div>
       </div>
-      <BNav a="map" go={setScr}/>
+      <BNav a="map" go={setScr} hide={isWide}/>
     </div>
 
     {/* ONBOARDING */}
@@ -290,13 +321,13 @@ export default function App(){
         </div>
         <div style={{padding:"0 28px 56px",zIndex:1}}><Btn onClick={()=>setObStep(1)} style={{width:"100%",padding:16,borderRadius:16,border:"none",background:"#C8F525",color:"#111",fontSize:17,fontWeight:800,cursor:"pointer",fontFamily:font}}>Zaczynajmy</Btn></div>
       </div>}
-      {obStep===1&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:"0 20px",flex:1,overflow:"auto",paddingBottom:100}}>
+      {obStep===1&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:isWide?"0 60px":"0 20px",flex:1,maxWidth:600,margin:isWide?"0 auto":"0",overflow:"auto",paddingBottom:100}}>
         <h2 style={{fontSize:20,fontWeight:800,color:C.text,margin:"0 0 14px"}}>O Tobie</h2>
         {[{l:"Imię",v:profile.name,o:v=>setProfile(p=>({...p,name:v})),p:"Dawid",t:"text"},{l:"Waga (kg)",v:profile.weight,o:v=>setProfile(p=>({...p,weight:parseFloat(v)||0})),t:"number"},{l:"Wiek",v:profile.age,o:v=>setProfile(p=>({...p,age:parseInt(v)||0})),t:"number"}].map((f,i)=><div key={i} style={{marginBottom:12}}><label style={{fontSize:10,fontWeight:700,color:C.muted}}>{f.l.toUpperCase()}</label><input type={f.t} value={f.v} onChange={e=>f.o(e.target.value)} placeholder={f.p} style={{...fs,marginTop:4}}/></div>)}
         <label style={{fontSize:10,fontWeight:700,color:C.muted}}>DOŚWIADCZENIE</label>
         <div style={{display:"flex",gap:6,marginTop:6}}>{["beginner","intermediate","advanced"].map(e=><Btn key={e} onClick={()=>setProfile(p=>({...p,exp:e}))} style={{flex:1,padding:"10px 4px",borderRadius:12,border:profile.exp===e?`2px solid ${C.acD}`:`1px solid ${C.border}`,background:profile.exp===e?C.acBg:C.white,fontSize:11,fontWeight:700,color:profile.exp===e?C.acD:C.text,fontFamily:font,textAlign:"center",cursor:"pointer"}}>{e==="beginner"?"Początkujący":e==="intermediate"?"Średni":"Zaawansowany"}</Btn>)}</div>
       </div><div style={{position:"absolute",bottom:0,left:0,right:0,padding:"14px 20px 34px",background:`linear-gradient(to top,${C.bg} 60%,transparent)`}}><Btn onClick={()=>setObStep(2)} style={{width:"100%",padding:15,borderRadius:16,border:"none",background:C.acD,color:"#111",fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:font}}>Dalej</Btn></div></div>}
-      {obStep===2&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:"0 20px",flex:1,overflow:"auto",paddingBottom:100}}>
+      {obStep===2&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:isWide?"0 60px":"0 20px",flex:1,maxWidth:600,margin:isWide?"0 auto":"0",overflow:"auto",paddingBottom:100}}>
         <h2 style={{fontSize:20,fontWeight:800,color:C.text,margin:"0 0 4px"}}>Twoje 1RM</h2>
         <p style={{fontSize:11,color:C.muted,margin:"0 0 12px"}}>Maksymalny ciężar na 1 powtórzenie</p>
         {["Bench Press","Squat","Deadlift","OHP"].map(k=><div key={k} style={{background:C.card,borderRadius:14,padding:12,marginBottom:8,boxShadow:C.sh}}>
@@ -304,7 +335,7 @@ export default function App(){
           <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6}}><input type="number" value={rms[k]||""} onChange={e=>setRms(r=>({...r,[k]:parseFloat(e.target.value)||0}))} style={{...fs,flex:1}}/><span style={{fontSize:14,fontWeight:600,color:C.muted}}>kg</span></div>
         </div>)}
       </div><div style={{position:"absolute",bottom:0,left:0,right:0,padding:"14px 20px 34px",background:`linear-gradient(to top,${C.bg} 60%,transparent)`}}><Btn onClick={()=>setObStep(3)} style={{width:"100%",padding:15,borderRadius:16,border:"none",background:C.acD,color:"#111",fontSize:16,fontWeight:800,cursor:"pointer",fontFamily:font}}>Dalej</Btn></div></div>}
-      {obStep===3&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:"0 20px",flex:1,overflow:"auto",paddingBottom:100}}>
+      {obStep===3&&<div style={{flex:1,display:"flex",flexDirection:"column"}}><div style={{padding:isWide?"0 60px":"0 20px",flex:1,maxWidth:600,margin:isWide?"0 auto":"0",overflow:"auto",paddingBottom:100}}>
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>{Ic.target(C.warm)}<h2 style={{fontSize:20,fontWeight:800,color:C.text,margin:0}}>Twoje cele</h2></div>
         <p style={{fontSize:11,color:C.muted,margin:"4px 0 12px"}}>Docelowe 1RM</p>
         {["Bench Press","Squat","Deadlift","OHP"].map(k=><div key={k} style={{background:C.card,borderRadius:14,padding:12,marginBottom:8,boxShadow:C.sh}}>
@@ -318,7 +349,7 @@ export default function App(){
     <div style={{height:"100%",display:scr==="edit"?"flex":"none",flexDirection:"column"}}>
       <StatusBar/>
       <div style={{padding:"0 16px 6px",display:"flex",alignItems:"center",justifyContent:"space-between"}}><div><h1 style={{fontSize:18,fontWeight:800,color:C.text,margin:0}}>Edytuj plan</h1></div><Btn onClick={()=>setScr("home")} style={{background:C.inp,border:"none",borderRadius:8,padding:"6px 10px",cursor:"pointer",color:C.text,fontSize:11,fontWeight:700,fontFamily:font}}>Gotowe</Btn></div>
-      <div style={{...sc,padding:"6px 14px 96px"}}>
+      <div style={{...sc,padding:"6px "+(isWide?"32px":"14px")+" 96px"}}>
         <div style={{background:C.card,borderRadius:12,padding:10,marginBottom:8,boxShadow:C.sh}}>
           <label style={{fontSize:9,fontWeight:700,color:C.muted}}>NAZWA PLANU</label>
           <input value={plan.name} onChange={e=>setPlan(p=>({...p,name:e.target.value}))} style={{...fs,marginTop:4}}/>
@@ -364,7 +395,7 @@ export default function App(){
           <Btn onClick={()=>setPlan(p=>({...p,weeks:[...p.weeks,{type:"Akumulacja"}]}))} style={{width:"100%",padding:6,borderRadius:8,border:`2px dashed ${C.acBg2}`,background:C.acBg,color:C.acD,fontSize:11,fontWeight:700,cursor:"pointer",fontFamily:font,marginTop:4}}>{Ic.plus} Tydzień</Btn>
         </div>
       </div>
-      <BNav a="edit" go={setScr}/>
+      <BNav a="edit" go={setScr} hide={isWide}/>
     </div>
 
     {/* MODEL SETTINGS */}
