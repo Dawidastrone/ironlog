@@ -1,0 +1,22 @@
+{
+  "short_name": "IRONLOG",
+  "name": "IRONLOG — Workout Tracker",
+  "description": "Śledź progresję. Bij rekordy. Trenuj mądrzej.",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#111113",
+  "background_color": "#F4F3F8"
+}
